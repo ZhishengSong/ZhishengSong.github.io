@@ -7,23 +7,29 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
 const fmt = (d: Date) => d.toISOString().slice(0, 10);
 ---
 <Base title="Blog">
-  <h1>Blog</h1>
-  <ul class="posts">
-    {posts.map((p) => (
-      <li>
-        <span class="muted">{fmt(p.data.date)}</span>
-        <div>
-          <a href={`/blog/${p.id}`}>{p.data.title}</a>
-          {p.data.description && <div class="muted desc">{p.data.description}</div>}
-        </div>
-      </li>
-    ))}
-  </ul>
+  <div class="split">
+    <h1 class="label">Blog</h1>
+    <ul class="posts">
+      {posts.map((p) => (
+        <li>
+          <span class="muted when">{fmt(p.data.date)}</span>
+          <div>
+            <a href={`/blog/${p.id}`} class="title">{p.data.title}</a>
+            {p.data.description && <div class="muted desc">{p.data.description}</div>}
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
 </Base>
 
 <style>
-  .posts { list-style: none; padding: 0; margin: 24px 0 0; }
-  .posts li { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-  .posts > li > .muted { font-variant-numeric: tabular-nums; flex-shrink: 0; }
-  .desc { font-size: 0.9rem; }
+  .posts { list-style: none; padding: 0; margin: 0; }
+  .posts li { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 4px 24px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .posts li:first-child { padding-top: 6px; }
+  .when { font-variant-numeric: tabular-nums; font-size: 0.9rem; padding-top: 2px; }
+  .title { font-size: 1.1rem; font-weight: 600; text-decoration: none; }
+  .title:hover { text-decoration: underline; }
+  .desc { font-size: 0.92rem; }
+  @media (max-width: 600px) { .posts li { grid-template-columns: 1fr; } }
 </style>
