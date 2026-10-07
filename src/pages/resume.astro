@@ -1,0 +1,51 @@
+---
+import Base from '../layouts/Base.astro';
+import { profile, education, experience, projects, skills, awards } from '../data/resume';
+---
+<Base title="Resume">
+  <h1>Resume</h1>
+  <p class="muted">{profile.tagline} · <a href={`mailto:${profile.email}`}>{profile.email}</a></p>
+
+  <h2>Education</h2>
+  {education.map((e) => (
+    <div class="item">
+      <div class="row"><strong>{e.school}</strong><span class="muted">{e.period}</span></div>
+      <div>{e.degree}</div>
+      <div class="muted small">{e.detail}</div>
+    </div>
+  ))}
+
+  <h2>Experience</h2>
+  {experience.map((x) => (
+    <div class="item">
+      <div class="row"><strong>{x.org}</strong><span class="muted">{x.period}</span></div>
+      <div class="muted">{x.role}</div>
+      <ul>{x.points.map((p) => <li>{p}</li>)}</ul>
+    </div>
+  ))}
+
+  <h2>Projects</h2>
+  {projects.map((p) => (
+    <div class="item">
+      <div class="row"><strong>{p.name}</strong><span class="muted">{p.period}</span></div>
+      <div>{p.desc}</div>
+    </div>
+  ))}
+
+  <h2>Skills</h2>
+  {skills.map((s) => <p class="skill"><strong>{s.group}:</strong> {s.items}</p>)}
+
+  <h2>Honors</h2>
+  {awards.map((a) => (
+    <div class="row"><span>{a.name}</span><span class="muted">{a.period}</span></div>
+  ))}
+</Base>
+
+<style>
+  .item { margin-bottom: 24px; }
+  .row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; }
+  .small { font-size: 0.9rem; }
+  ul { margin: 8px 0 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+  .skill { margin: 6px 0; }
+</style>

@@ -1,0 +1,29 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const fmt = (d: Date) => d.toISOString().slice(0, 10);
+---
+<Base title="Blog">
+  <h1>Blog</h1>
+  <ul class="posts">
+    {posts.map((p) => (
+      <li>
+        <span class="muted">{fmt(p.data.date)}</span>
+        <div>
+          <a href={`/blog/${p.id}`}>{p.data.title}</a>
+          {p.data.description && <div class="muted desc">{p.data.description}</div>}
+        </div>
+      </li>
+    ))}
+  </ul>
+</Base>
+
+<style>
+  .posts { list-style: none; padding: 0; margin: 24px 0 0; }
+  .posts li { display: flex; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .posts > li > .muted { font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .desc { font-size: 0.9rem; }
+</style>

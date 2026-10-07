@@ -1,0 +1,43 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { profile, experience } from '../data/resume';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
+  .slice(0, 3);
+const fmt = (d: Date) => d.toISOString().slice(0, 10);
+---
+<Base>
+  <section class="hero">
+    <h1>Hi, I'm {profile.name}.</h1>
+    <p class="muted">{profile.tagline} · {profile.location}</p>
+    <p>{profile.bio}</p>
+    <p class="contact">
+      <a href={`mailto:${profile.email}`}>{profile.email}</a>
+      {profile.links.map((l) => <a href={l.url}>{l.label}</a>)}
+      <a href="/resume">Resume →</a>
+    </p>
+  </section>
+
+  <h2>Now</h2>
+  <p><strong>{experience[0].org}</strong> — {experience[0].role}</p>
+
+  <h2>Recent writing</h2>
+  {posts.length === 0 ? <p class="muted">Nothing yet.</p> : (
+    <ul class="posts">
+      {posts.map((p) => (
+        <li><span class="muted">{fmt(p.data.date)}</span><a href={`/blog/${p.id}`}>{p.data.title}</a></li>
+      ))}
+    </ul>
+  )}
+  <p><a href="/blog">All posts →</a></p>
+</Base>
+
+<style>
+  .hero p { margin: 8px 0; }
+  .contact { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px !important; }
+  .posts { list-style: none; padding: 0; margin: 0; }
+  .posts li { display: flex; gap: 16px; padding: 6px 0; }
+  .posts .muted { font-variant-numeric: tabular-nums; flex-shrink: 0; }
+</style>
