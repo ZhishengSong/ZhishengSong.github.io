@@ -1,0 +1,91 @@
+---
+import { profile, type Paper } from '../data/resume';
+
+interface Props { papers: Paper[]; open?: boolean }
+const { papers, open = false } = Astro.props;
+const me = profile.name;
+---
+<ol class="papers">
+  {papers.map((p, i) => (
+    <li class="paper">
+      <span class="idx mono">[{papers.length - i}]</span>
+      <div>
+        <div class="title">{p.title}</div>
+        <div class="authors">
+          {p.note && <span class="note">{p.note}</span>}
+          {p.authors.map((a, j) => (
+            <>{a === me ? <strong class="me">{a}</strong> : a}{j < p.authors.length - 1 ? ', ' : ''}</>
+          ))}
+        </div>
+        <div class="venue mono">
+          <em>{p.venue}</em>, {p.year}
+          {p.status && <span class="status">{p.status}</span>}
+        </div>
+        <div class="actions mono">
+          {p.links.map((l) => <a href={l.url}>[{l.label}]</a>)}
+          <button type="button" class="tog" aria-expanded={open ? 'true' : 'false'} aria-controls={`abs-p${i}`}>[abs]</button>
+          {p.bibtex && <button type="button" class="tog" aria-expanded="false" aria-controls={`bib-p${i}`}>[bib]</button>}
+        </div>
+        <p class="abs" id={`abs-p${i}`} hidden={!open}>{p.abstract}</p>
+        {p.bibtex && (
+          <div class="bib" id={`bib-p${i}`} hidden>
+            <button type="button" class="copy mono" data-bib={p.bibtex}>copy</button>
+            <pre><code>{p.bibtex}</code></pre>
+          </div>
+        )}
+      </div>
+    </li>
+  ))}
+</ol>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.tog').forEach((b) => {
+    b.addEventListener('click', () => {
+      const panel = document.getElementById(b.getAttribute('aria-controls') ?? '');
+      if (!panel) return;
+      const show = panel.hidden;
+      panel.hidden = !show;
+      b.setAttribute('aria-expanded', String(show));
+    });
+  });
+  document.querySelectorAll<HTMLButtonElement>('.copy').forEach((b) => {
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.bib ?? '');
+        b.textContent = 'copied ✓';
+      } catch {
+        b.textContent = 'select & copy';
+      }
+      setTimeout(() => (b.textContent = 'copy'), 1600);
+    });
+  });
+</script>
+
+<style>
+  .papers { list-style: none; padding: 0; margin: 0; display: grid; gap: 28px; }
+  .paper { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 0 12px; }
+  .idx { color: var(--faint); font-size: 0.8rem; padding-top: 4px; }
+  .title { font-weight: 600; font-size: 1.08rem; line-height: 1.4; }
+  .authors { color: var(--muted); font-size: 0.95rem; margin-top: 2px; }
+  .me { color: var(--fg); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+  .venue { font-size: 0.78rem; color: var(--muted); margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .status { color: var(--hl); }
+  .note { font-size: 0.85rem; font-style: italic; }
+  .actions { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.78rem; margin-top: 6px; align-items: baseline; }
+  .actions a { text-decoration: none; }
+  .actions a:hover { text-decoration: underline; }
+  .tog { background: none; border: 0; padding: 0; font: inherit; cursor: pointer; color: var(--accent); }
+  .tog[aria-expanded='true'] { color: var(--hl); }
+  .abs {
+    font-family: var(--serif); font-size: 0.95rem; color: var(--fg); margin: 8px 0 0;
+    padding-left: 14px; border-left: 2px solid var(--accent);
+  }
+  .bib { position: relative; margin-top: 8px; }
+  .bib pre { margin: 0; white-space: pre; }
+  .copy {
+    position: absolute; top: 8px; right: 8px; font-size: 0.7rem; cursor: pointer;
+    background: var(--panel); color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 2px 8px;
+  }
+  .copy:hover { color: var(--accent); border-color: var(--accent); }
+  @media (max-width: 600px) { .paper { grid-template-columns: 1fr; } .idx { display: none; } }
+</style>

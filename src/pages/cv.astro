@@ -1,0 +1,88 @@
+---
+import Base from '../layouts/Base.astro';
+import { profile, education, experience, publications, skills, awards } from '../data/resume';
+const sections = ['Education', 'Research & Work', 'Publications', 'Skills', 'Honors'];
+---
+<Base title="CV">
+  <div class="split head">
+    <div></div>
+    <div>
+      <h1>{profile.name}</h1>
+      <p class="muted meta">{profile.tagline} · {profile.location} · {profile.email}</p>
+    </div>
+  </div>
+
+  <section class="split">
+    <h2 class="label">{sections[0]}</h2>
+    <div>
+      {education.map((e) => (
+        <div class="item">
+          <div class="row"><strong>{e.school}</strong><span class="when">{e.period}</span></div>
+          <div>{e.degree}</div>
+          <div class="muted small">{e.detail}</div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="split">
+    <h2 class="label">{sections[1]}</h2>
+    <div>
+      {experience.map((x) => (
+        <div class="item">
+          <div class="row"><strong>{x.org}</strong><span class="when">{x.period}</span></div>
+          <div class="muted"><em>{x.role}</em></div>
+          <ul>{x.points.map((p) => <li>{p}</li>)}</ul>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="split">
+    <h2 class="label">{sections[2]}</h2>
+    <ol class="refs">
+      {publications.map((p) => (
+        <li>
+          {p.authors.length === 0 && <span class="muted">[Authors withheld]</span>}
+          {p.authors.map((a, j) => <>{a === profile.name ? <strong>{a}</strong> : a}{j < p.authors.length - 1 ? ', ' : ''}</>)}
+          {' '}({p.year}). <em>{p.title}</em>. {p.venue}.{p.status && <span class="status"> {p.status}.</span>}
+          {p.links[0] && <> <a class="small" href={p.links[0].url}>[link]</a></>}
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section class="split">
+    <h2 class="label">{sections[3]}</h2>
+    <div>{skills.map((s) => <p class="skill"><strong>{s.group}:</strong> {s.items}</p>)}</div>
+  </section>
+
+  <section class="split">
+    <h2 class="label">{sections[4]}</h2>
+    <div>
+      {awards.map((a) => (
+        <div class="row"><span>{a.name}</span><span class="when">{a.period}</span></div>
+      ))}
+    </div>
+  </section>
+</Base>
+
+<style>
+  .head { margin-bottom: 48px; }
+  .meta { font-size: 0.8rem; margin: 0; }
+  .split > h2.label { margin: 0; align-self: start; }
+  .split > h2.label { border-bottom: 0; padding-bottom: 0; }
+  .item { margin-bottom: 28px; }
+  .item:last-child { margin-bottom: 0; }
+  .row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; }
+  .when { font-family: var(--mono); font-size: 0.8rem; color: var(--faint); }
+  .small { font-size: 0.85rem; }
+  ul { margin: 8px 0 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+  .refs { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+  .status { color: var(--hl); }
+  .skill { margin: 0 0 8px; }
+  @media print {
+    header, footer, .grid-bg { display: none; }
+  }
+</style>

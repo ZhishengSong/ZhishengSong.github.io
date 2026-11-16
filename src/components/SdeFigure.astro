@@ -1,0 +1,121 @@
+---
+// Hero figure: 48 Ornstein–Uhlenbeck sample paths, one latent path highlighted
+// with noisy observations (a tiny POMP), re-simulated on every load.
+---
+<figure class="sde">
+  <div class="frame">
+    <canvas aria-label="Animated sample paths of an Ornstein–Uhlenbeck process with noisy observations of one latent path"></canvas>
+    <div class="axis y mono">x<sub>t</sub></div>
+    <div class="axis x mono">t →</div>
+  </div>
+  <figcaption>
+    <span class="fig">Figure.</span>
+    Sample paths of d<i>X</i><sub>t</sub> = −θ<i>X</i><sub>t</sub> d<i>t</i> + σ d<i>W</i><sub>t</sub>.
+    The highlighted path is a latent state; dots are its noisy observations
+    <i>Y</i><sub>n</sub> ~ 𝒩(<i>X</i><sub>t<sub>n</sub></sub>, 0.3²) — a toy partially observed Markov process.
+  </figcaption>
+</figure>
+
+<script>
+  const fig = document.querySelector<HTMLElement>('.sde')!;
+  const canvas = fig.querySelector('canvas')!;
+  const ctx = canvas.getContext('2d')!;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const N = 48, STEPS = 400, T = 4, theta = 1.2, sigma = 0.9, obsEvery = 25, obsSd = 0.3;
+  const dt = T / STEPS;
+  let paths: Float32Array[] = [], obs: { i: number; y: number }[] = [];
+  let k = 0, raf = 0, seed = 0;
+
+  // small seeded PRNG + Box–Muller
+  let s = 0;
+  const rand = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const randn = () => Math.sqrt(-2 * Math.log(rand() + 1e-12)) * Math.cos(2 * Math.PI * rand());
+
+  function simulate() {
+    seed = (Math.random() * 1e6) | 0; s = seed;
+    paths = Array.from({ length: N }, (_, n) => {
+      const p = new Float32Array(STEPS + 1);
+      p[0] = n === 0 ? 1.6 : 1.6 + 0.25 * randn();
+      for (let i = 1; i <= STEPS; i++) p[i] = p[i - 1] - theta * p[i - 1] * dt + sigma * Math.sqrt(dt) * randn();
+      return p;
+    });
+    obs = [];
+    for (let i = obsEvery; i <= STEPS; i += obsEvery) obs.push({ i, y: paths[0][i] + obsSd * randn() });
+  }
+
+  const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  function size() {
+    const r = canvas.getBoundingClientRect();
+    const d = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = r.width * d; canvas.height = r.height * d;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+  }
+
+  function draw(upto: number) {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    const pad = 8, X = (i: number) => pad + (i / STEPS) * (w - 2 * pad);
+    const Y = (v: number) => h / 2 - (v / 2.6) * (h / 2 - pad);
+    const fg = css('--fg'), acc = css('--accent'), hl = css('--hl'), line = css('--line');
+    ctx.clearRect(0, 0, w, h);
+
+    // zero line + stationary ±2σ∞ band
+    const sInf = sigma / Math.sqrt(2 * theta);
+    ctx.fillStyle = acc; ctx.globalAlpha = 0.06;
+    ctx.fillRect(0, Y(2 * sInf), w, Y(-2 * sInf) - Y(2 * sInf));
+    ctx.globalAlpha = 1; ctx.strokeStyle = line; ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(0, Y(0)); ctx.lineTo(w, Y(0)); ctx.stroke(); ctx.setLineDash([]);
+
+    ctx.lineWidth = 1; ctx.strokeStyle = fg; ctx.globalAlpha = 0.14;
+    for (let n = 1; n < N; n++) {
+      const p = paths[n]; ctx.beginPath(); ctx.moveTo(X(0), Y(p[0]));
+      for (let i = 1; i <= upto; i++) ctx.lineTo(X(i), Y(p[i]));
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1; ctx.strokeStyle = acc; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(0), Y(paths[0][0]));
+    for (let i = 1; i <= upto; i++) ctx.lineTo(X(i), Y(paths[0][i]));
+    ctx.stroke();
+
+    ctx.fillStyle = hl; ctx.strokeStyle = hl; ctx.lineWidth = 1;
+    for (const o of obs) {
+      if (o.i > upto) break;
+      ctx.globalAlpha = 0.35; ctx.beginPath(); ctx.moveTo(X(o.i), Y(paths[0][o.i])); ctx.lineTo(X(o.i), Y(o.y)); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.beginPath(); ctx.arc(X(o.i), Y(o.y), 3, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  function run() {
+    cancelAnimationFrame(raf);
+    simulate(); size();
+    if (reduce) { draw(STEPS); return; }
+    k = 0;
+    const tick = () => {
+      k = Math.min(STEPS, k + 4);
+      draw(k);
+      if (k < STEPS) raf = requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  addEventListener('resize', () => { size(); draw(k || STEPS); });
+  addEventListener('themechange', () => draw(reduce ? STEPS : k));
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => draw(reduce ? STEPS : k));
+  run();
+</script>
+
+<style>
+  .sde { margin: 0; }
+  .frame {
+    position: relative; height: 220px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--panel); overflow: hidden;
+  }
+  canvas { width: 100%; height: 100%; display: block; }
+  .axis { position: absolute; font-size: 0.7rem; color: var(--faint); }
+  .axis.y { left: 10px; top: 8px; }
+  .axis.x { right: 10px; bottom: 6px; }
+  figcaption { font-size: 0.88rem; color: var(--muted); margin-top: 10px; line-height: 1.55; }
+  .fig { color: var(--fg); font-weight: 600; margin-right: 2px; }
+  @media (max-width: 600px) { .frame { height: 180px; } }
+</style>
